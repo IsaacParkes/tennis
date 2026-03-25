@@ -1,10 +1,9 @@
 {
-  "routes": [
-    { "src": "/api/availability", "dest": "/api/availability.py" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+  "rewrites": [
+    { "source": "/api/availability", "destination": "/functions/availability" }
   ],
   "functions": {
-    "api/availability.py": {
+    "functions/availability.py": {
       "includeFiles": "{courts,scraper}.py"
     }
   }
