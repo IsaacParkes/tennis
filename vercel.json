@@ -1,5 +1,7 @@
 {
-  "rewrites": [
-    { "source": "/api/availability", "destination": "/api/availability" }
-  ]
+  "functions": {
+    "api/availability.py": {
+      "includeFiles": "{courts,scraper}.py"
+    }
+  }
 }
