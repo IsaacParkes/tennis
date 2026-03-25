@@ -1,4 +1,8 @@
 {
+  "routes": [
+    { "src": "/api/availability", "dest": "/api/availability.py" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
   "functions": {
     "api/availability.py": {
       "includeFiles": "{courts,scraper}.py"
