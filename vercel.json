@@ -1,11 +1,11 @@
 {
-  "rewrites": [
-    { "source": "/api/availability", "destination": "/functions/availability" }
-  ],
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
   "functions": {
-    "functions/availability.py": {
+    "api/availability.py": {
+      "runtime": "@vercel/python",
       "includeFiles": "{courts,scraper}.py"
     }
-  },
-  "outputDirectory": "public"
+  }
 }
