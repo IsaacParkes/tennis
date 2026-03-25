@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>North London Tennis Courts</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f4f0;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #2d6a4f;
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+
+        header h1 { font-size: 1.6rem; font-weight: 600; }
+        header p { font-size: 0.9rem; opacity: 0.85; margin-top: 0.3rem; }
+
+        .controls {
+            background: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            justify-content: center;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .date-nav button {
+            background: #e8f0e8;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 0.5rem 0.7rem;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #2d6a4f;
+            transition: background 0.15s;
+        }
+
+        .date-nav button:hover { background: #d0e0d0; }
+
+        input[type="date"] {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        select {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+        }
+
+        .quick-dates {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .quick-dates button {
+            background: #e8f0e8;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 0.45rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #2d6a4f;
+            transition: background 0.15s;
+        }
+
+        .quick-dates button:hover, .quick-dates button.active {
+            background: #2d6a4f;
+            color: white;
+            border-color: #2d6a4f;
+        }
+
+        .search-btn {
+            background: #2d6a4f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .search-btn:hover { background: #1b4332; }
+        .search-btn:disabled { background: #999; cursor: not-allowed; }
+
+        .results {
+            max-width: 1100px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .status-msg {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #777;
+            font-size: 1.1rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #ddd;
+            border-top-color: #2d6a4f;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .venue-card {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .venue-card.collapsed .venue-body { display: none; }
+
+        .venue-header {
+            padding: 1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .venue-header:hover { background: #f8faf8; }
+
+        .venue-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d6a4f;
+        }
+
+        .venue-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #777;
+        }
+
+        .slot-count {
+            background: #2d6a4f;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .slot-count.none { background: #ccc; }
+
+        .venue-body {
+            border-top: 1px solid #eee;
+            padding: 0.8rem 1.2rem 1rem;
+        }
+
+        .court-group { margin-bottom: 0.8rem; }
+        .court-group:last-child { margin-bottom: 0; }
+
+        .court-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.4rem;
+        }
+
+        .slots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .slot {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 6px;
+            padding: 0.35rem 0.7rem;
+            font-size: 0.85rem;
+        }
+
+        .slot .time { font-weight: 600; color: #2d6a4f; }
+        .slot .price { color: #777; font-size: 0.8rem; }
+        .slot .light-icon { font-size: 0.75rem; color: #f9a825; }
+
+        .no-slots {
+            color: #aaa;
+            font-size: 0.9rem;
+            font-style: italic;
+            padding: 0.3rem 0;
+        }
+
+        .summary-bar {
+            text-align: center;
+            padding: 0.8rem;
+            font-size: 0.9rem;
+            color: #555;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .summary-bar strong { color: #2d6a4f; }
+
+        .booking-link {
+            font-size: 0.8rem;
+            color: #2d6a4f;
+            text-decoration: none;
+            margin-left: 0.5rem;
+        }
+
+        .booking-link:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .controls { padding: 1rem; }
+            .results { padding: 0 0.5rem; }
+            .venue-header { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>North London Tennis Courts</h1>
+        <p>Find available courts near Tewkesbury Road</p>
+    </header>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Quick Pick</label>
+            <div class="quick-dates">
+                <button onclick="setDateOffset(0)">Today</button>
+                <button onclick="setDateOffset(1)">Tomorrow</button>
+                <button onclick="setDateOffset(2)" id="day2-btn"></button>
+                <button onclick="setDateOffset(3)" id="day3-btn"></button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Date</label>
+            <div class="date-nav">
+                <button onclick="shiftDate(-1)" title="Previous day">&larr;</button>
+                <input type="date" id="date-input">
+                <button onclick="shiftDate(1)" title="Next day">&rarr;</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>From</label>
+            <select id="start-time"></select>
+        </div>
+
+        <div class="control-group">
+            <label>To</label>
+            <select id="end-time"></select>
+        </div>
+
+        <div class="control-group">
+            <label>&nbsp;</label>
+            <button class="search-btn" id="search-btn" onclick="search()">Search</button>
+        </div>
+    </div>
+
+    <div class="results" id="results">
+        <div class="status-msg">Select a date and time range, then click Search.</div>
+    </div>
+
+    <script>
+        const dateInput = document.getElementById('date-input');
+        const startSelect = document.getElementById('start-time');
+        const endSelect = document.getElementById('end-time');
+        const searchBtn = document.getElementById('search-btn');
+        const resultsDiv = document.getElementById('results');
+
+        for (let h = 6; h <= 22; h++) {
+            const val = `${String(h).padStart(2, '0')}:00`;
+            startSelect.add(new Option(`${h}:00`, val));
+            endSelect.add(new Option(`${h}:00`, val));
+        }
+
+        function formatDate(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function dayName(d) {
+            return d.toLocaleDateString('en-GB', { weekday: 'short' });
+        }
+
+        const today = new Date();
+        dateInput.value = formatDate(today);
+        startSelect.value = '08:00';
+        endSelect.value = '22:00';
+
+        const day2 = new Date(today); day2.setDate(day2.getDate() + 2);
+        const day3 = new Date(today); day3.setDate(day3.getDate() + 3);
+        document.getElementById('day2-btn').textContent = dayName(day2);
+        document.getElementById('day3-btn').textContent = dayName(day3);
+
+        function setDateOffset(offset) {
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            dateInput.value = formatDate(d);
+            search();
+        }
+
+        function shiftDate(delta) {
+            const parts = dateInput.value.split('-').map(Number);
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            d.setDate(d.getDate() + delta);
+            dateInput.value = formatDate(d);
+            search();
+        }
+
+        async function search() {
+            const date = dateInput.value;
+            const startTime = startSelect.value;
+            const endTime = endSelect.value;
+            if (!date) return;
+
+            searchBtn.disabled = true;
+            resultsDiv.innerHTML = '<div class="status-msg"><span class="spinner"></span> Checking courts across 15 parks&hellip;</div>';
+
+            try {
+                const params = new URLSearchParams({ date, start_time: startTime, end_time: endTime });
+                const resp = await fetch(`/api/availability?${params}`);
+                const data = await resp.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div class="status-msg">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                renderResults(data, date);
+            } catch (err) {
+                resultsDiv.innerHTML = '<div class="status-msg">Failed to fetch availability. Please try again.</div>';
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        function renderResults(data, date) {
+            const totalSlots = data.reduce((sum, v) => sum + v.slots.length, 0);
+            const venuesWithSlots = data.filter(v => v.slots.length > 0).length;
+
+            const parts = date.split('-').map(Number);
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const dateLabel = dateObj.toLocaleDateString('en-GB', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            let html = `<div class="summary-bar"><strong>${totalSlots}</strong> slot${totalSlots !== 1 ? 's' : ''} available across <strong>${venuesWithSlots}</strong> park${venuesWithSlots !== 1 ? 's' : ''} on ${dateLabel}</div>`;
+
+            for (const { venue: v, slots } of data) {
+                const bookingUrl = `https://clubspark.lta.org.uk/${v.slug}/Booking/BookByDate#?date=${date}&role=guest`;
+
+                html += `<div class="venue-card${slots.length === 0 ? ' collapsed' : ''}">`;
+                html += `<div class="venue-header" onclick="this.parentElement.classList.toggle('collapsed')">`;
+                html += `<div><span class="venue-name">${v.name}</span><a href="${bookingUrl}" target="_blank" class="booking-link" onclick="event.stopPropagation()">Book &rarr;</a></div>`;
+                html += `<div class="venue-meta"><span>${v.distance_miles} mi</span><span>${v.borough}</span>`;
+                html += `<span class="slot-count ${slots.length === 0 ? 'none' : ''}">${slots.length} slot${slots.length !== 1 ? 's' : ''}</span></div>`;
+                html += `</div>`;
+
+                html += `<div class="venue-body">`;
+
+                if (slots.length === 0) {
+                    html += `<div class="no-slots">No available slots in this time range</div>`;
+                } else {
+                    const byCourt = {};
+                    for (const s of slots) {
+                        if (!byCourt[s.court_name]) byCourt[s.court_name] = [];
+                        byCourt[s.court_name].push(s);
+                    }
+
+                    for (const [court, courtSlots] of Object.entries(byCourt)) {
+                        html += `<div class="court-group">`;
+                        html += `<div class="court-label">${court}</div>`;
+                        html += `<div class="slots">`;
+                        for (const s of courtSlots) {
+                            const price = s.cost > 0 ? `\u00a3${s.cost.toFixed(2)}` : 'Free';
+                            const light = s.lighting ? '<span class="light-icon" title="Floodlit">&#x1f4a1;</span>' : '';
+                            html += `<div class="slot"><span class="time">${s.start}\u2013${s.end}</span><span class="price">${price}</span>${light}</div>`;
+                        }
+                        html += `</div></div>`;
+                    }
+                }
+
+                html += `</div></div>`;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

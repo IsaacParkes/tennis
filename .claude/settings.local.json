@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(pip install:*)",
+      "Bash(curl -s \"http://127.0.0.1:5000/\")",
+      "Bash(start chrome:*)",
+      "Bash(curl -s -I -H \"Origin: http://localhost\" \"https://clubspark.lta.org.uk/v0/VenueBooking/FinsburyPark/GetVenueSessions?startDate=2026-03-25&endDate=2026-03-25\")",
+      "Bash(python -c \":*)"
+    ]
+  }
+}
