@@ -6,5 +6,6 @@
     "functions/availability.py": {
       "includeFiles": "{courts,scraper}.py"
     }
-  }
+  },
+  "outputDirectory": "public"
 }
