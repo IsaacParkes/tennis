@@ -2,7 +2,7 @@
   "framework": null,
   "functions": {
     "api/availability.py": {
-      "includeFiles": "{courts,scraper}.py"
+      "includeFiles": "{courts,scraper,better_scraper}.py"
     }
   }
 }

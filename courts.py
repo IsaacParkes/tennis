@@ -1,6 +1,13 @@
 """
-Tennis court venues in London that use the ClubSpark (LTA) booking system.
-Each venue has lat/lng for dynamic distance calculation from any user location.
+Tennis court venues in London.
+
+VENUES     — ClubSpark (LTA) courts, booked via clubspark.lta.org.uk
+BETTER_VENUES — Better.org (GLL) courts, booked via bookings.better.org.uk
+
+All venues have lat/lng for dynamic distance calculation from any user location.
+Better venues are discovered from the OpenActive FacilityUse RPDE feed and
+supplemented here with a confirmed seed list.
+Run `python scripts/discover_better_venues.py` to refresh the full list.
 """
 
 VENUES = [
@@ -43,4 +50,69 @@ VENUES = [
 
     # Southwark / Lewisham
     {"name": "Dulwich Park", "slug": "DulwichPark", "borough": "Southwark", "lat": 51.4510, "lng": -0.0852},
+]
+
+# Better.org (GLL) tennis venues.
+# Slugs and coordinates sourced from the OpenActive FacilityUse RPDE feed.
+# Expand this list by running: python scripts/discover_better_venues.py
+BETTER_VENUES = [
+    # Hackney
+    {
+        "name": "Britannia Leisure Centre",
+        "slug": "britannia-leisure-centre",
+        "activity_slug": "tennis-pay-and-play",
+        "borough": "Hackney",
+        "lat": 51.5384,
+        "lng": -0.0830,
+        "source": "better",
+    },
+    # Islington
+    {
+        "name": "Islington Tennis Centre",
+        "slug": "islington-tennis-centre",
+        "activity_slug": "tennis-pay-and-play",
+        "borough": "Islington",
+        "lat": 51.5505,
+        "lng": -0.0973,
+        "source": "better",
+    },
+    {
+        "name": "Finsbury Leisure Centre",
+        "slug": "finsbury-leisure-centre",
+        "activity_slug": "tennis-pay-and-play",
+        "borough": "Islington",
+        "lat": 51.5259,
+        "lng": -0.0989,
+        "source": "better",
+    },
+    # Newham / Olympic Park
+    {
+        "name": "Copper Box Arena",
+        "slug": "copper-box-arena",
+        "activity_slug": "tennis-pay-and-play",
+        "borough": "Newham",
+        "lat": 51.5429,
+        "lng": -0.0138,
+        "source": "better",
+    },
+    # Lewisham
+    {
+        "name": "Ladywell Arena",
+        "slug": "ladywell-arena",
+        "activity_slug": "tennis-pay-and-play",
+        "borough": "Lewisham",
+        "lat": 51.4584,
+        "lng": -0.0200,
+        "source": "better",
+    },
+    # Southwark
+    {
+        "name": "Tanner Street Park",
+        "slug": "tanner-street-park",
+        "activity_slug": "tennis-pay-and-play",
+        "borough": "Southwark",
+        "lat": 51.5010,
+        "lng": -0.0786,
+        "source": "better",
+    },
 ]

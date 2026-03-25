@@ -117,10 +117,20 @@ def parse_availability(api_data, start_time=None, end_time=None):
     return available
 
 
+def filter_by_radius(venues, user_lat, user_lng, radius_miles):
+    """Filter venues by radius and attach computed distance_miles."""
+    nearby = []
+    for v in venues:
+        dist = _haversine(user_lat, user_lng, v["lat"], v["lng"])
+        if dist <= radius_miles:
+            nearby.append({**v, "distance_miles": round(dist, 1)})
+    return nearby
+
+
 def get_availability(venues, date_str, start_time=None, end_time=None,
                      user_lat=None, user_lng=None, radius_miles=None):
     """
-    Fetch availability across venues within radius of user location.
+    Fetch availability across ClubSpark venues within radius of user location.
 
     Args:
         venues: List of venue dicts from courts.py
@@ -138,12 +148,7 @@ def get_availability(venues, date_str, start_time=None, end_time=None,
     lng = user_lng if user_lng is not None else DEFAULT_LNG
     radius = radius_miles if radius_miles is not None else DEFAULT_RADIUS_MILES
 
-    # Filter venues by radius and attach computed distance
-    nearby = []
-    for v in venues:
-        dist = _haversine(lat, lng, v["lat"], v["lng"])
-        if dist <= radius:
-            nearby.append({**v, "distance_miles": round(dist, 1)})
+    nearby = filter_by_radius(venues, lat, lng, radius)
 
     results = []
 

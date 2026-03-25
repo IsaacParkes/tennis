@@ -309,6 +309,27 @@
 
         .booking-link:hover { text-decoration: underline; }
 
+        .source-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .source-badge.better {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .source-badge.clubspark {
+            background: #f3e5f5;
+            color: #6a1b9a;
+            border: 1px solid #ce93d8;
+        }
+
         @media (max-width: 600px) {
             .controls { padding: 1rem; }
             .results { padding: 0 0.5rem; }
@@ -587,11 +608,17 @@
             let html = `<div class="summary-bar">${summary}</div>`;
 
             for (const { venue: v, slots } of data) {
-                const bookingUrl = `https://clubspark.lta.org.uk/${v.slug}/Booking/BookByDate#?date=${date}&role=guest`;
+                const isBetter = v.source === 'better';
+                const bookingUrl = isBetter
+                    ? `https://bookings.better.org.uk/location/${v.slug}/${v.activity_slug}/${date}/by-time`
+                    : `https://clubspark.lta.org.uk/${v.slug}/Booking/BookByDate#?date=${date}&role=guest`;
+                const sourceBadge = isBetter
+                    ? `<span class="source-badge better">Better</span>`
+                    : `<span class="source-badge clubspark">ClubSpark</span>`;
 
                 html += `<div class="venue-card${slots.length === 0 ? ' collapsed' : ''}">`;
                 html += `<div class="venue-header" onclick="this.parentElement.classList.toggle('collapsed')">`;
-                html += `<div><span class="venue-name">${v.name}</span><a href="${bookingUrl}" target="_blank" class="booking-link" onclick="event.stopPropagation()">Book &rarr;</a></div>`;
+                html += `<div><span class="venue-name">${v.name}</span>${sourceBadge}<a href="${bookingUrl}" target="_blank" class="booking-link" onclick="event.stopPropagation()">Book &rarr;</a></div>`;
                 html += `<div class="venue-meta"><span>${v.distance_miles} mi</span><span>${v.borough}</span>`;
                 html += `<span class="slot-count ${slots.length === 0 ? 'none' : ''}">${slots.length} slot${slots.length !== 1 ? 's' : ''}</span></div>`;
                 html += `</div>`;
