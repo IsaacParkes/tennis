@@ -79,19 +79,24 @@ def parse_availability(api_data, start_time=None, end_time=None):
                 if capacity == 0 or name in ("Booking", "Closed"):
                     continue
 
-                # Apply time filter
-                if session_start < start_min or session_end > end_min:
-                    continue
-
                 cost = session.get("GuestPrice") or session.get("CourtCost") or session.get("CostFrom") or 0
 
-                available.append({
-                    "court_name": court_name,
-                    "start": _minutes_to_time(session_start),
-                    "end": _minutes_to_time(session_end),
-                    "cost": cost,
-                    "lighting": lighting,
-                })
+                # Split into 1-hour slots
+                slot_start = session_start
+                while slot_start + 60 <= session_end:
+                    slot_end = slot_start + 60
+
+                    # Apply time filter per hour slot
+                    if slot_start >= start_min and slot_end <= end_min:
+                        available.append({
+                            "court_name": court_name,
+                            "start": _minutes_to_time(slot_start),
+                            "end": _minutes_to_time(slot_end),
+                            "cost": cost,
+                            "lighting": lighting,
+                        })
+
+                    slot_start = slot_end
 
     return available
 
