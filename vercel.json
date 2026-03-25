@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/availability", "destination": "/api/availability" }
+    { "source": "/api/availability", "destination": "/api" }
   ]
 }
