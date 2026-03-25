@@ -226,6 +226,13 @@
             border-radius: 6px;
             padding: 0.35rem 0.7rem;
             font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .slot:hover {
+            background: #c8e6c9;
         }
 
         .slot .time { font-weight: 600; color: #2d6a4f; }
@@ -430,7 +437,7 @@
                         for (const s of courtSlots) {
                             const price = s.cost > 0 ? `\u00a3${s.cost.toFixed(2)}` : 'Free';
                             const light = s.lighting ? '<span class="light-icon" title="Floodlit">&#x1f4a1;</span>' : '';
-                            html += `<div class="slot"><span class="time">${s.start}\u2013${s.end}</span><span class="price">${price}</span>${light}</div>`;
+                            html += `<a class="slot" href="${bookingUrl}" target="_blank"><span class="time">${s.start}\u2013${s.end}</span><span class="price">${price}</span>${light}</a>`;
                         }
                         html += `</div></div>`;
                     }
