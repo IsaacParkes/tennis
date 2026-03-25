@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>North London Tennis Courts</title>
+    <title>London Tennis Courts</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -26,10 +26,10 @@
 
         .controls {
             background: white;
-            padding: 1.5rem 2rem;
+            padding: 1.2rem 2rem;
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.8rem;
             align-items: flex-end;
             justify-content: center;
             border-bottom: 1px solid #ddd;
@@ -49,6 +49,41 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        .location-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        input[type="text"] {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            width: 180px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2d6a4f;
+        }
+
+        .locate-btn {
+            background: #e8f0e8;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 0.5rem 0.6rem;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #2d6a4f;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        .locate-btn:hover { background: #d0e0d0; }
+        .locate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .date-nav {
             display: flex;
@@ -259,6 +294,12 @@
 
         .summary-bar strong { color: #2d6a4f; }
 
+        .location-hint {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.15rem;
+        }
+
         .booking-link {
             font-size: 0.8rem;
             color: #2d6a4f;
@@ -272,16 +313,37 @@
             .controls { padding: 1rem; }
             .results { padding: 0 0.5rem; }
             .venue-header { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+            input[type="text"] { width: 140px; }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>North London Tennis Courts</h1>
-        <p>Find available courts near Tewkesbury Road</p>
+        <h1>London Tennis Courts</h1>
+        <p>Find available ClubSpark courts near you</p>
     </header>
 
     <div class="controls">
+        <div class="control-group">
+            <label>Location</label>
+            <div class="location-row">
+                <input type="text" id="location-input" placeholder="Postcode or area" value="N15">
+                <button class="locate-btn" id="locate-btn" onclick="useMyLocation()" title="Use my current location">&#x1f4cd;</button>
+            </div>
+            <div class="location-hint" id="location-hint">e.g. N15, Hackney, Finsbury Park</div>
+        </div>
+
+        <div class="control-group">
+            <label>Radius</label>
+            <select id="radius">
+                <option value="1">1 mile</option>
+                <option value="2">2 miles</option>
+                <option value="3" selected>3 miles</option>
+                <option value="5">5 miles</option>
+                <option value="10">10 miles</option>
+            </select>
+        </div>
+
         <div class="control-group">
             <label>Quick Pick</label>
             <div class="quick-dates">
@@ -318,7 +380,7 @@
     </div>
 
     <div class="results" id="results">
-        <div class="status-msg">Select a date and time range, then click Search.</div>
+        <div class="status-msg">Select a location and date, then click Search.</div>
     </div>
 
     <script>
@@ -327,6 +389,14 @@
         const endSelect = document.getElementById('end-time');
         const searchBtn = document.getElementById('search-btn');
         const resultsDiv = document.getElementById('results');
+        const locationInput = document.getElementById('location-input');
+        const locationHint = document.getElementById('location-hint');
+        const locateBtn = document.getElementById('locate-btn');
+        const radiusSelect = document.getElementById('radius');
+
+        // Resolved coordinates (set by geocoding or geolocation)
+        let resolvedLat = null;
+        let resolvedLng = null;
 
         for (let h = 6; h <= 22; h++) {
             const val = `${String(h).padStart(2, '0')}:00`;
@@ -370,17 +440,115 @@
             search();
         }
 
+        // Clear resolved coords when user edits location text
+        locationInput.addEventListener('input', () => {
+            resolvedLat = null;
+            resolvedLng = null;
+            locationHint.textContent = 'e.g. N15, Hackney, Finsbury Park';
+        });
+
+        function useMyLocation() {
+            if (!navigator.geolocation) {
+                locationHint.textContent = 'Geolocation not supported by your browser.';
+                return;
+            }
+            locateBtn.disabled = true;
+            locationHint.textContent = 'Getting your location\u2026';
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    resolvedLat = pos.coords.latitude;
+                    resolvedLng = pos.coords.longitude;
+                    locationInput.value = 'My location';
+                    locationHint.textContent = `\u2713 ${resolvedLat.toFixed(4)}, ${resolvedLng.toFixed(4)}`;
+                    locateBtn.disabled = false;
+                },
+                () => {
+                    locationHint.textContent = 'Could not get location. Try entering a postcode.';
+                    locateBtn.disabled = false;
+                }
+            );
+        }
+
+        function isUkPostcode(s) {
+            return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(s.trim());
+        }
+
+        async function geocode(locationStr) {
+            const q = locationStr.trim();
+
+            if (isUkPostcode(q)) {
+                // Use postcodes.io for UK postcodes — fast and accurate
+                const clean = q.replace(/\s+/g, '').toUpperCase();
+                const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
+                const data = await resp.json();
+                if (data.status === 200) {
+                    return { lat: data.result.latitude, lng: data.result.longitude, label: data.result.postcode };
+                }
+                // Partial postcode (e.g. "N15") — try outcode endpoint
+                const resp2 = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
+                const data2 = await resp2.json();
+                if (data2.status === 200) {
+                    return { lat: data2.result.latitude, lng: data2.result.longitude, label: clean };
+                }
+            }
+
+            // Fallback: Nominatim (OpenStreetMap)
+            const params = new URLSearchParams({ q: `${q}, London, UK`, format: 'json', limit: 1, countrycodes: 'gb' });
+            const resp = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+                headers: { 'Accept-Language': 'en' }
+            });
+            const results = await resp.json();
+            if (results.length > 0) {
+                return { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon), label: results[0].display_name.split(',')[0] };
+            }
+
+            return null;
+        }
+
         async function search() {
             const date = dateInput.value;
             const startTime = startSelect.value;
             const endTime = endSelect.value;
+            const radius = radiusSelect.value;
             if (!date) return;
 
             searchBtn.disabled = true;
-            resultsDiv.innerHTML = '<div class="status-msg"><span class="spinner"></span> Checking courts across 15 parks&hellip;</div>';
+
+            // Resolve location
+            let lat = resolvedLat;
+            let lng = resolvedLng;
+            const locationText = locationInput.value.trim();
+
+            if ((lat === null || lng === null) && locationText && locationText !== 'My location') {
+                locationHint.textContent = 'Geocoding\u2026';
+                try {
+                    const geo = await geocode(locationText);
+                    if (geo) {
+                        lat = geo.lat;
+                        lng = geo.lng;
+                        resolvedLat = lat;
+                        resolvedLng = lng;
+                        locationHint.textContent = `\u2713 ${geo.label}`;
+                    } else {
+                        locationHint.textContent = 'Location not found. Try a postcode.';
+                        searchBtn.disabled = false;
+                        return;
+                    }
+                } catch (e) {
+                    locationHint.textContent = 'Geocoding failed. Try a postcode.';
+                    searchBtn.disabled = false;
+                    return;
+                }
+            }
+
+            resultsDiv.innerHTML = `<div class="status-msg"><span class="spinner"></span> Checking courts within ${radius} mile${radius == 1 ? '' : 's'}&hellip;</div>`;
 
             try {
-                const params = new URLSearchParams({ date, start_time: startTime, end_time: endTime });
+                const params = new URLSearchParams({ date, start_time: startTime, end_time: endTime, radius });
+                if (lat !== null && lng !== null) {
+                    params.set('lat', lat);
+                    params.set('lng', lng);
+                }
                 const resp = await fetch(`/api/availability?${params}`);
                 const data = await resp.json();
 
@@ -389,7 +557,7 @@
                     return;
                 }
 
-                renderResults(data, date);
+                renderResults(data, date, radius);
             } catch (err) {
                 resultsDiv.innerHTML = '<div class="status-msg">Failed to fetch availability. Please try again.</div>';
             } finally {
@@ -397,7 +565,7 @@
             }
         }
 
-        function renderResults(data, date) {
+        function renderResults(data, date, radius) {
             const totalSlots = data.reduce((sum, v) => sum + v.slots.length, 0);
             const venuesWithSlots = data.filter(v => v.slots.length > 0).length;
 
@@ -407,7 +575,16 @@
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
             });
 
-            let html = `<div class="summary-bar"><strong>${totalSlots}</strong> slot${totalSlots !== 1 ? 's' : ''} available across <strong>${venuesWithSlots}</strong> park${venuesWithSlots !== 1 ? 's' : ''} on ${dateLabel}</div>`;
+            const totalVenues = data.length;
+            let summary = `<strong>${totalSlots}</strong> slot${totalSlots !== 1 ? 's' : ''} available across <strong>${venuesWithSlots}</strong> park${venuesWithSlots !== 1 ? 's' : ''}`;
+            summary += ` (${totalVenues} checked within ${radius} mile${radius == 1 ? '' : 's'}) on ${dateLabel}`;
+
+            if (data.length === 0) {
+                resultsDiv.innerHTML = `<div class="status-msg">No courts found within ${radius} miles. Try increasing the radius.</div>`;
+                return;
+            }
+
+            let html = `<div class="summary-bar">${summary}</div>`;
 
             for (const { venue: v, slots } of data) {
                 const bookingUrl = `https://clubspark.lta.org.uk/${v.slug}/Booking/BookByDate#?date=${date}&role=guest`;

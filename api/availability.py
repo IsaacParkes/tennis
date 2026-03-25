@@ -19,12 +19,22 @@ class handler(BaseHTTPRequestHandler):
         date_str = params.get("date", [None])[0]
         start_time = params.get("start_time", [None])[0]
         end_time = params.get("end_time", [None])[0]
+        lat = params.get("lat", [None])[0]
+        lng = params.get("lng", [None])[0]
+        radius = params.get("radius", [None])[0]
 
         if not date_str:
             self._respond(400, {"error": "date is required"})
             return
 
-        results = get_availability(VENUES, date_str, start_time, end_time)
+        user_lat = float(lat) if lat else None
+        user_lng = float(lng) if lng else None
+        radius_miles = float(radius) if radius else None
+
+        results = get_availability(
+            VENUES, date_str, start_time, end_time,
+            user_lat=user_lat, user_lng=user_lng, radius_miles=radius_miles,
+        )
         self._respond(200, results)
 
     def _respond(self, status, data):

@@ -2,11 +2,17 @@
 ClubSpark API client for fetching tennis court availability.
 """
 
+import math
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 BASE_URL = "https://clubspark.lta.org.uk"
 API_PREFIX = "/v0/VenueBooking"
+
+# Default location: Tewkesbury Road, N15
+DEFAULT_LAT = 51.5805
+DEFAULT_LNG = -0.0760
+DEFAULT_RADIUS_MILES = 3.0
 
 
 def _minutes_to_time(minutes):
@@ -20,6 +26,16 @@ def _time_to_minutes(time_str):
     """Convert 'HH:MM' string to minutes-from-midnight."""
     h, m = map(int, time_str.split(":"))
     return h * 60 + m
+
+
+def _haversine(lat1, lng1, lat2, lng2):
+    """Return distance in miles between two lat/lng points."""
+    R = 3958.8
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = (math.sin(dlat / 2) ** 2
+         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2) ** 2)
+    return R * 2 * math.asin(math.sqrt(a))
 
 
 def fetch_sessions(slug, date_str):
@@ -101,19 +117,34 @@ def parse_availability(api_data, start_time=None, end_time=None):
     return available
 
 
-def get_availability(venues, date_str, start_time=None, end_time=None):
+def get_availability(venues, date_str, start_time=None, end_time=None,
+                     user_lat=None, user_lng=None, radius_miles=None):
     """
-    Fetch availability across all venues concurrently.
+    Fetch availability across venues within radius of user location.
 
     Args:
         venues: List of venue dicts from courts.py
         date_str: Date in 'YYYY-MM-DD' format
         start_time: Optional earliest time as 'HH:MM'
         end_time: Optional latest time as 'HH:MM'
+        user_lat: User's latitude (defaults to Tewkesbury Road N15)
+        user_lng: User's longitude (defaults to Tewkesbury Road N15)
+        radius_miles: Max distance in miles (defaults to 3.0)
 
     Returns:
-        List of dicts: {venue, slots} for each venue with available courts
+        List of dicts: {venue, slots} for each venue within radius, sorted by distance
     """
+    lat = user_lat if user_lat is not None else DEFAULT_LAT
+    lng = user_lng if user_lng is not None else DEFAULT_LNG
+    radius = radius_miles if radius_miles is not None else DEFAULT_RADIUS_MILES
+
+    # Filter venues by radius and attach computed distance
+    nearby = []
+    for v in venues:
+        dist = _haversine(lat, lng, v["lat"], v["lng"])
+        if dist <= radius:
+            nearby.append({**v, "distance_miles": round(dist, 1)})
+
     results = []
 
     def _fetch_one(venue):
@@ -122,7 +153,7 @@ def get_availability(venues, date_str, start_time=None, end_time=None):
         return venue, slots
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(_fetch_one, v): v for v in venues}
+        futures = {executor.submit(_fetch_one, v): v for v in nearby}
         for future in as_completed(futures):
             venue, slots = future.result()
             results.append({
@@ -130,6 +161,5 @@ def get_availability(venues, date_str, start_time=None, end_time=None):
                 "slots": sorted(slots, key=lambda s: (s["court_name"], s["start"])),
             })
 
-    # Sort venues by distance
     results.sort(key=lambda r: r["venue"]["distance_miles"])
     return results
