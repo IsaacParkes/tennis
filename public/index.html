@@ -490,27 +490,38 @@
             );
         }
 
-        function isUkPostcode(s) {
+        function isUkFullPostcode(s) {
             return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(s.trim());
+        }
+
+        function isUkOutcode(s) {
+            return /^[A-Z]{1,2}\d[A-Z\d]?$/i.test(s.trim());
         }
 
         async function geocode(locationStr) {
             const q = locationStr.trim();
+            const clean = q.replace(/\s+/g, '').toUpperCase();
 
-            if (isUkPostcode(q)) {
-                // Use postcodes.io for UK postcodes — fast and accurate
-                const clean = q.replace(/\s+/g, '').toUpperCase();
-                const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
-                const data = await resp.json();
-                if (data.status === 200) {
-                    return { lat: data.result.latitude, lng: data.result.longitude, label: data.result.postcode };
-                }
-                // Partial postcode (e.g. "N15") — try outcode endpoint
-                const resp2 = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
-                const data2 = await resp2.json();
-                if (data2.status === 200) {
-                    return { lat: data2.result.latitude, lng: data2.result.longitude, label: clean };
-                }
+            if (isUkFullPostcode(q)) {
+                // Full postcode e.g. "N15 5PQ"
+                try {
+                    const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
+                    const data = await resp.json();
+                    if (data.status === 200) {
+                        return { lat: data.result.latitude, lng: data.result.longitude, label: data.result.postcode };
+                    }
+                } catch (e) {}
+            }
+
+            if (isUkOutcode(q)) {
+                // Outcode e.g. "N15", "SW1A", "EC1"
+                try {
+                    const resp = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
+                    const data = await resp.json();
+                    if (data.status === 200) {
+                        return { lat: data.result.latitude, lng: data.result.longitude, label: clean };
+                    }
+                } catch (e) {}
             }
 
             // Fallback: Nominatim (OpenStreetMap)
@@ -610,7 +621,7 @@
             for (const { venue: v, slots } of data) {
                 const isBetter = v.source === 'better';
                 const bookingUrl = isBetter
-                    ? `https://bookings.better.org.uk/location/${v.slug}/${v.activity_slug}/${date}/by-time`
+                    ? (v.booking_url || `https://bookings.better.org.uk/location/${v.slug}/tennis-activities/${date}/by-time`)
                     : `https://clubspark.lta.org.uk/${v.slug}/Booking/BookByDate#?date=${date}&role=guest`;
                 const sourceBadge = isBetter
                     ? `<span class="source-badge better">Better</span>`

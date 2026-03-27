@@ -1,25 +1,30 @@
 """
 Better.org (GLL) API client for fetching tennis court availability.
 
-Venues are discovered from the OpenActive FacilityUse RPDE feed:
-  https://better-admin.org.uk/api/openactive/better/facility-uses
+API discovery via browser DevTools (March 2026):
+  - Requires headers: Origin/Referer from bookings.better.org.uk
+  - Categories: GET /api/activities/venue/{slug}/categories
+  - Tennis children: GET /api/activities/venue/{slug}/categories/{parent-slug}
+  - Times: GET /api/activities/venue/{slug}/activity/{leaf-slug}/times?date=YYYY-MM-DD
+  - Booking URL: https://bookings.better.org.uk/location/{slug}/{parent-slug}/{date}/by-time
 
-Availability is fetched from the internal slots API:
-  https://better-admin.org.uk/api/activities/location/{slug}/{activity}/slots?date=YYYY-MM-DD
+Response format for /times:
+  {data: [{starts_at: {format_24_hour: "07:00"}, ends_at: {format_24_hour: "08:00"},
+           price: {formatted_amount: "£14.85"}, spaces: 2,
+           action_to_show: {status: "BOOK"|"SOLD_OUT"|"LOGIN"}, name: "...", ...}]}
 """
 
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
 
-BETTER_BASE = "https://better-admin.org.uk"
-OPENACTIVE_FACILITY_USES = f"{BETTER_BASE}/api/openactive/better/facility-uses"
-SLOTS_API = f"{BETTER_BASE}/api/activities/location/{{slug}}/{{activity}}/slots"
-BOOKING_URL = "https://bookings.better.org.uk/location/{slug}/{activity}/{date}/by-time"
+BETTER_ADMIN = "https://better-admin.org.uk"
+BOOKING_BASE = "https://bookings.better.org.uk"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; TennisCourtsBot/1.0)",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Accept": "application/json",
+    "Origin": BOOKING_BASE,
+    "Referer": f"{BOOKING_BASE}/",
 }
 
 
@@ -28,207 +33,149 @@ def _time_to_minutes(time_str):
     return h * 60 + m
 
 
-def discover_london_tennis_venues():
+def fetch_tennis_slugs(venue_slug):
     """
-    Paginate the Better OpenActive FacilityUse RPDE feed and return all
-    London tennis court venues with lat/lng and booking slugs.
-
-    Returns:
-        List of dicts with keys: name, slug, activity_slug, borough, lat, lng, source
+    Discover the tennis activity slugs for a venue.
+    Returns (parent_slug, [leaf_slug, ...]) or (None, []) if no tennis.
     """
-    venues = []
-    url = OPENACTIVE_FACILITY_USES
-
-    while url:
-        try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception:
-            break
-
-        items = data.get("items", [])
-        next_url = data.get("next", "")
-
-        for item in items:
-            if item.get("state") != "updated":
-                continue
-            d = item.get("data", {})
-
-            # Filter for tennis
-            activities = [a.get("prefLabel", "") for a in d.get("activity", [])]
-            facility_types = [f.get("prefLabel", "") for f in d.get("facilityType", [])]
-            name = d.get("name", "")
-            is_tennis = (
-                any("tennis" in a.lower() for a in activities)
-                or any("tennis" in f.lower() for f in facility_types)
-                or "tennis" in name.lower()
-            )
-            if not is_tennis:
-                continue
-
-            loc = d.get("location", {})
-            geo = loc.get("geo", {})
-            lat = geo.get("latitude")
-            lng = geo.get("longitude")
-
-            # Filter for London (rough lat/lng bounding box)
-            if lat is None or lng is None:
-                continue
-            if not (51.28 <= lat <= 51.70 and -0.55 <= lng <= 0.30):
-                continue
-
-            booking_url = d.get("url", "")
-            # Extract venue slug and activity slug from URL
-            # Format: https://bookings.better.org.uk/location/{slug}/{activity}/...
-            slug = ""
-            activity_slug = "tennis-pay-and-play"
-            if "bookings.better.org.uk/location/" in booking_url:
-                parts = booking_url.split("/location/")[1].split("/")
-                if len(parts) >= 2:
-                    slug = parts[0]
-                    activity_slug = parts[1] if parts[1] else activity_slug
-
-            if not slug:
-                continue
-
-            venue_name = loc.get("name") or name
-            address = loc.get("address", {})
-            borough = address.get("addressLocality", "")
-
-            venues.append({
-                "name": venue_name,
-                "slug": slug,
-                "activity_slug": activity_slug,
-                "borough": borough,
-                "lat": round(lat, 6),
-                "lng": round(lng, 6),
-                "source": "better",
-            })
-
-        # Stop if next URL didn't change (end of feed)
-        if not next_url or next_url == url:
-            break
-        url = next_url
-
-    # Deduplicate by slug
-    seen = set()
-    unique = []
-    for v in venues:
-        if v["slug"] not in seen:
-            seen.add(v["slug"])
-            unique.append(v)
-    return unique
-
-
-def fetch_better_slots(slug, activity_slug, date_str):
-    """
-    Fetch available slots for a Better venue on a given date.
-
-    Returns:
-        List of slot dicts, or None on error
-    """
-    url = SLOTS_API.format(slug=slug, activity=activity_slug)
     try:
-        resp = requests.get(url, params={"date": date_str}, headers=HEADERS, timeout=15)
+        resp = requests.get(
+            f"{BETTER_ADMIN}/api/activities/venue/{venue_slug}/categories",
+            headers=HEADERS, timeout=10)
         resp.raise_for_status()
-        return resp.json()
-    except requests.RequestException:
-        return None
+        cats = resp.json().get("data", [])
+    except Exception:
+        return None, []
+
+    tennis_cat = next(
+        (c for c in cats if "tennis" in c.get("slug", "") or
+         "tennis" in c.get("name", "").lower()), None)
+    if not tennis_cat:
+        return None, []
+
+    parent_slug = tennis_cat["slug"]
+
+    if tennis_cat.get("has_children"):
+        try:
+            resp2 = requests.get(
+                f"{BETTER_ADMIN}/api/activities/venue/{venue_slug}/categories/{parent_slug}",
+                headers=HEADERS, timeout=10)
+            resp2.raise_for_status()
+            children = resp2.json().get("data", {}).get("children", [])
+            # Exclude add-on activities (e.g. "additional-players")
+            leaf_slugs = [
+                c["slug"] for c in children
+                if not c.get("has_children") and "additional" not in c["slug"]
+            ]
+        except Exception:
+            leaf_slugs = [parent_slug]
+    else:
+        leaf_slugs = [parent_slug]
+
+    return parent_slug, leaf_slugs
 
 
-def parse_better_slots(slots_data, start_time=None, end_time=None):
+def fetch_better_times(venue_slug, activity_slug, date_str):
     """
-    Parse Better slots API response into the same format as ClubSpark slots.
-
-    Returns:
-        List of dicts with keys: court_name, start, end, cost, lighting
+    Fetch available time slots for one leaf tennis activity.
+    Returns list of raw slot dicts, or [] on error.
     """
-    if not slots_data:
+    url = f"{BETTER_ADMIN}/api/activities/venue/{venue_slug}/activity/{activity_slug}/times"
+    try:
+        resp = requests.get(url, params={"date": date_str}, headers=HEADERS, timeout=10)
+        resp.raise_for_status()
+        return resp.json().get("data", [])
+    except Exception:
         return []
 
+
+def parse_better_times(times_data, court_name, start_time=None, end_time=None):
+    """
+    Parse Better /times response into our standard slot format.
+    Filters by time window and only includes slots with available spaces.
+    """
     start_min = _time_to_minutes(start_time) if start_time else 0
     end_min = _time_to_minutes(end_time) if end_time else 1440
 
-    available = []
-
-    # Handle both list and dict ({"slots": [...]}) response formats
-    items = slots_data if isinstance(slots_data, list) else slots_data.get("slots", [])
-
-    for slot in items:
-        # Check availability
-        spaces = slot.get("spaces_remaining") or slot.get("remainingUses") or 0
-        if spaces == 0:
+    slots = []
+    for t in times_data:
+        if t.get("spaces", 0) == 0:
             continue
-        if not slot.get("available", True):
+        status = t.get("action_to_show", {}).get("status", "")
+        if status == "SOLD_OUT":
             continue
 
-        # Parse start/end time — could be ISO string or OpenActive format
-        raw_start = slot.get("start_date") or slot.get("startDate") or ""
-        raw_end = slot.get("end_date") or slot.get("endDate") or ""
-
-        try:
-            dt_start = datetime.fromisoformat(raw_start.replace("Z", "+00:00"))
-            dt_end = datetime.fromisoformat(raw_end.replace("Z", "+00:00"))
-        except (ValueError, AttributeError):
+        start = t.get("starts_at", {}).get("format_24_hour", "")
+        end = t.get("ends_at", {}).get("format_24_hour", "")
+        if not start or not end:
             continue
 
-        s_min = dt_start.hour * 60 + dt_start.minute
-        e_min = dt_end.hour * 60 + dt_end.minute
-
+        s_min = _time_to_minutes(start)
+        e_min = _time_to_minutes(end)
         if s_min < start_min or e_min > end_min:
             continue
 
-        # Price — check multiple field names
-        offers = slot.get("offers") or slot.get("prices") or []
-        cost = 0
-        if offers:
-            if isinstance(offers[0], dict):
-                cost = (offers[0].get("price") or offers[0].get("cost") or
-                        offers[0].get("Price") or 0)
-        else:
-            cost = slot.get("price") or slot.get("cost") or 0
+        price_str = t.get("price", {}).get("formatted_amount", "")
+        try:
+            cost = float(price_str.replace("£", "").replace(",", "").strip())
+        except (ValueError, AttributeError):
+            cost = 0.0
 
-        court_name = slot.get("court_name") or slot.get("resource_name") or "Court"
+        name = t.get("name", court_name)
+        lighting = "floodlit" in name.lower() or "flood" in name.lower()
 
-        available.append({
-            "court_name": court_name,
-            "start": dt_start.strftime("%H:%M"),
-            "end": dt_end.strftime("%H:%M"),
-            "cost": float(cost),
-            "lighting": False,
+        slots.append({
+            "court_name": name,
+            "start": start,
+            "end": end,
+            "cost": cost,
+            "lighting": lighting,
         })
 
-    return available
+    return slots
 
 
 def get_better_availability(venues, date_str, start_time=None, end_time=None):
     """
-    Fetch availability for Better venues concurrently.
+    Fetch availability for a list of Better.org venues concurrently.
 
-    Args:
-        venues: List of Better venue dicts (with slug, activity_slug)
-        date_str: Date in 'YYYY-MM-DD' format
-        start_time: Optional earliest time as 'HH:MM'
-        end_time: Optional latest time as 'HH:MM'
+    Each venue dict must have: slug, booking_slug, tennis_slugs (list), name, borough,
+    distance_miles, source="better".
 
-    Returns:
-        List of dicts: {venue, slots} — same format as ClubSpark results
+    For venues without pre-seeded tennis_slugs, auto-discovers them first.
+
+    Returns: list of {venue, slots} dicts, same format as ClubSpark results.
     """
     results = []
 
     def _fetch_one(venue):
-        slots_data = fetch_better_slots(venue["slug"], venue["activity_slug"], date_str)
-        slots = parse_better_slots(slots_data, start_time, end_time)
-        return venue, slots
+        slug = venue["slug"]
+        tennis_slugs = venue.get("tennis_slugs") or []
+        booking_slug = venue.get("booking_slug") or "tennis-activities"
+
+        # Auto-discover if not pre-seeded
+        if not tennis_slugs:
+            booking_slug, tennis_slugs = fetch_tennis_slugs(slug)
+            if not tennis_slugs:
+                return venue, []
+
+        all_slots = []
+        for activity_slug in tennis_slugs:
+            times = fetch_better_times(slug, activity_slug, date_str)
+            all_slots.extend(parse_better_times(times, activity_slug, start_time, end_time))
+
+        return venue, sorted(all_slots, key=lambda s: (s["court_name"], s["start"]))
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {executor.submit(_fetch_one, v): v for v in venues}
         for future in as_completed(futures):
             venue, slots = future.result()
+            # Build booking URL
+            booking_slug = venue.get("booking_slug", "tennis-activities")
+            booking_url = f"{BOOKING_BASE}/location/{venue['slug']}/{booking_slug}/{date_str}/by-time"
             results.append({
-                "venue": venue,
-                "slots": sorted(slots, key=lambda s: (s["court_name"], s["start"])),
+                "venue": {**venue, "booking_url": booking_url},
+                "slots": slots,
             })
 
     results.sort(key=lambda r: r["venue"].get("distance_miles", 999))
