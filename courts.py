@@ -12,72 +12,118 @@ Run `python scripts/discover_better_venues.py` to refresh the full list.
 
 VENUES = [
     # Haringey
-    {"name": "Finsbury Park", "slug": "FinsburyPark", "borough": "Haringey", "lat": 51.5644, "lng": -0.1013},
-    {"name": "Downhills Park", "slug": "downhillsparktennisclub", "borough": "Haringey", "lat": 51.5847, "lng": -0.0893},
-    {"name": "Down Lane Park", "slug": "DownLanePark", "borough": "Haringey", "lat": 51.5908, "lng": -0.0644},
-    {"name": "Chestnuts Park", "slug": "ChestnutsPark", "borough": "Haringey", "lat": 51.5912, "lng": -0.0776},
-    {"name": "Stationers Park", "slug": "stationerspark", "borough": "Haringey", "lat": 51.5958, "lng": -0.1078},
-    {"name": "Priory Park", "slug": "PrioryPark2", "borough": "Haringey", "lat": 51.5994, "lng": -0.1187},
-    {"name": "Chapmans Green", "slug": "chapmansgreen", "borough": "Haringey", "lat": 51.6018, "lng": -0.0700},
-    {"name": "Bruce Castle Park", "slug": "BruceCastlePark", "borough": "Haringey", "lat": 51.5990, "lng": -0.0707},
-    {"name": "Albert Road Rec (OR Tambo)", "slug": "PavilionTennis", "borough": "Haringey", "lat": 51.5858, "lng": -0.0705},
+    # Finsbury Park: courts in SE corner near Seven Sisters Rd (globaltennisnetwork structured data)
+    {"name": "Finsbury Park", "slug": "FinsburyPark", "borough": "Haringey", "lat": 51.5679, "lng": -0.1045},
+    # Downhills Park: east side of park in Italian Gardens area (spintennisapp)
+    {"name": "Downhills Park", "slug": "downhillsparktennisclub", "borough": "Haringey", "lat": 51.5895, "lng": -0.0933},
+    # Down Lane Park: south of park (spintennisapp)
+    {"name": "Down Lane Park", "slug": "DownLanePark", "borough": "Haringey", "lat": 51.5904, "lng": -0.0646},
+    # Chestnuts Park: eastern half of park, St Ann's Road N15 (spintennisapp)
+    {"name": "Chestnuts Park", "slug": "ChestnutsPark", "borough": "Haringey", "lat": 51.5818, "lng": -0.0887},
+    # Stationers Park: Mayfield Road N8 (spintennisapp)
+    {"name": "Stationers Park", "slug": "stationerspark", "borough": "Haringey", "lat": 51.5791, "lng": -0.1125},
+    # Priory Park: Middle Lane N8, courts near Priory Road entrance (spintennisapp)
+    {"name": "Priory Park", "slug": "PrioryPark2", "borough": "Haringey", "lat": 51.5852, "lng": -0.1252},
+    # Chapmans Green: Perth Road N22 (not N17 — Wood Green area) (spintennisapp)
+    {"name": "Chapmans Green", "slug": "chapmansgreen", "borough": "Haringey", "lat": 51.6013, "lng": -0.0983},
+    # Bruce Castle Park: N17 (spintennisapp)
+    {"name": "Bruce Castle Park", "slug": "BruceCastlePark", "borough": "Haringey", "lat": 51.5988, "lng": -0.0714},
+    # OR Tambo Rec (Albert Rd): Durnsford Road N22 — NOT N15 (spintennisapp)
+    {"name": "Albert Road Rec (OR Tambo)", "slug": "PavilionTennis", "borough": "Haringey", "lat": 51.6005, "lng": -0.1340},
 
     # Hackney
-    {"name": "Clissold Park", "slug": "ClissoldParkHackney", "borough": "Hackney", "lat": 51.5617, "lng": -0.0826},
-    {"name": "Hackney Downs", "slug": "HackneyDowns", "borough": "Hackney", "lat": 51.5567, "lng": -0.0540},
-    {"name": "London Fields", "slug": "LondonFieldsPark", "borough": "Hackney", "lat": 51.5413, "lng": -0.0586},
-    {"name": "Springfield Park", "slug": "SpringfieldPark", "borough": "Hackney", "lat": 51.5690, "lng": -0.0487},
-    {"name": "Spring Hill Rec", "slug": "SpringHillParkTennis", "borough": "Hackney", "lat": 51.5702, "lng": -0.0467},
-    {"name": "Millfields Park", "slug": "MillfieldsParkMiddlesex", "borough": "Hackney", "lat": 51.5578, "lng": -0.0493},
+    # Clissold Park: courts by tennis pavilion, Queen Elizabeth's Walk N16 (OSM way 375067115 + spintennisapp)
+    {"name": "Clissold Park", "slug": "ClissoldParkHackney", "borough": "Hackney", "lat": 51.5640, "lng": -0.0868},
+    # Hackney Downs: Downs Park Road E5 (globaltennisnetwork structured data)
+    {"name": "Hackney Downs", "slug": "HackneyDowns", "borough": "Hackney", "lat": 51.5530, "lng": -0.0603},
+    # London Fields: Richmond Road opposite Navarino Road E8 (spintennisapp)
+    {"name": "London Fields", "slug": "LondonFieldsPark", "borough": "Hackney", "lat": 51.5423, "lng": -0.0615},
+    # Springfield Park: upper Clapton E5, near Springfield House (spintennisapp)
+    {"name": "Springfield Park", "slug": "SpringfieldPark", "borough": "Hackney", "lat": 51.5709, "lng": -0.0595},
+    # Spring Hill Rec: Spring Hill E5 (spintennisapp)
+    {"name": "Spring Hill Rec", "slug": "SpringHillParkTennis", "borough": "Hackney", "lat": 51.5732, "lng": -0.0592},
+    # Millfields Park: Chatsworth Road E5 (spintennisapp)
+    {"name": "Millfields Park", "slug": "MillfieldsParkMiddlesex", "borough": "Hackney", "lat": 51.5599, "lng": -0.0476},
 
     # Enfield
-    {"name": "Pymmes Park", "slug": "PymmesPark", "borough": "Enfield", "lat": 51.6155, "lng": -0.0791},
-    {"name": "Broomfield Park", "slug": "BroomfieldPark", "borough": "Enfield", "lat": 51.6097, "lng": -0.1125},
+    # Pymmes Park: Victoria Road N18 (spintennisapp)
+    {"name": "Pymmes Park", "slug": "PymmesPark", "borough": "Enfield", "lat": 51.6171, "lng": -0.0667},
+    # Broomfield Park: Aldermans Hill N13 (spintennisapp)
+    {"name": "Broomfield Park", "slug": "BroomfieldPark", "borough": "Enfield", "lat": 51.6168, "lng": -0.1173},
 
     # Waltham Forest
-    {"name": "Lloyd Park", "slug": "LloydPark", "borough": "Waltham Forest", "lat": 51.5845, "lng": -0.0135},
+    # Lloyd Park: Forest Road E17, courts to the right of main entrance (globaltennisnetwork)
+    {"name": "Lloyd Park", "slug": "LloydPark", "borough": "Waltham Forest", "lat": 51.5923, "lng": -0.0201},
 
     # Tower Hamlets / East London
-    {"name": "Victoria Park", "slug": "VictoriaParkTennis", "borough": "Tower Hamlets", "lat": 51.5363, "lng": -0.0396},
+    # Victoria Park: E9, courts in western section (spintennisapp)
+    {"name": "Victoria Park", "slug": "VictoriaParkTennis", "borough": "Tower Hamlets", "lat": 51.5407, "lng": -0.0391},
 
     # Southwark
-    {"name": "Dulwich Park",               "slug": "DulwichPark",                       "borough": "Southwark",  "lat": 51.4510, "lng": -0.0852},
-    {"name": "Burgess Park",               "slug": "BurgessParkSouthwark",              "borough": "Southwark",  "lat": 51.4816, "lng": -0.0899},
-    {"name": "Southwark Park",             "slug": "SouthwarkPark",                     "borough": "Southwark",  "lat": 51.4922, "lng": -0.0648},
-    {"name": "Tanner Street Park",         "slug": "TannerStPark",                      "borough": "Southwark",  "lat": 51.4993, "lng": -0.0811},
-    {"name": "Geraldine Mary Harmsworth",  "slug": "GeraldineMaryHarmsworth",           "borough": "Southwark",  "lat": 51.4969, "lng": -0.1071},
+    # Dulwich Park: College Road SE21, courts near Francis Peek Centre (spintennisapp)
+    {"name": "Dulwich Park",               "slug": "DulwichPark",                       "borough": "Southwark",  "lat": 51.4454, "lng": -0.0776},
+    # Burgess Park: near Addington Square, Camberwell SE5 (spintennisapp)
+    {"name": "Burgess Park",               "slug": "BurgessParkSouthwark",              "borough": "Southwark",  "lat": 51.4815, "lng": -0.0924},
+    # Southwark Park: west side near Jamaica Gate SE16 (spintennisapp)
+    {"name": "Southwark Park",             "slug": "SouthwarkPark",                     "borough": "Southwark",  "lat": 51.4957, "lng": -0.0589},
+    # Tanner Street Park: NE corner of park, SE1 (spintennisapp)
+    {"name": "Tanner Street Park",         "slug": "TannerStPark",                      "borough": "Southwark",  "lat": 51.4999, "lng": -0.0812},
+    # Geraldine Mary Harmsworth: St George's Road SE1 (spintennisapp)
+    {"name": "Geraldine Mary Harmsworth",  "slug": "GeraldineMaryHarmsworth",           "borough": "Southwark",  "lat": 51.4960, "lng": -0.1084},
 
     # Lambeth
-    {"name": "Brockwell Park",             "slug": "BrockwellPark",                     "borough": "Lambeth",    "lat": 51.4464, "lng": -0.1068},
-    {"name": "Clapham Common",             "slug": "ClaphamCommon",                     "borough": "Lambeth",    "lat": 51.4614, "lng": -0.1412},
-    {"name": "Kennington Park",            "slug": "KenningtonPark",                    "borough": "Lambeth",    "lat": 51.4851, "lng": -0.1109},
-    {"name": "Archbishop's Park",          "slug": "archbishopsparklambethnorth",        "borough": "Lambeth",    "lat": 51.4983, "lng": -0.1136},
-    {"name": "Streatham Common",           "slug": "therookery",                        "borough": "Lambeth",    "lat": 51.4244, "lng": -0.1337},
+    # Brockwell Park: Herne Hill SE24, centre of park (spintennisapp)
+    {"name": "Brockwell Park",             "slug": "BrockwellPark",                     "borough": "Lambeth",    "lat": 51.4528, "lng": -0.1032},
+    # Clapham Common: Windmill Drive SW4, courts near bowling green (globaltennisnetwork)
+    {"name": "Clapham Common",             "slug": "ClaphamCommon",                     "borough": "Lambeth",    "lat": 51.4541, "lng": -0.1510},
+    # Kennington Park: Kennington Park Road SE11 (spintennisapp)
+    {"name": "Kennington Park",            "slug": "KenningtonPark",                    "borough": "Lambeth",    "lat": 51.4843, "lng": -0.1106},
+    # Archbishop's Park: Lambeth Palace Road SE1 (spintennisapp)
+    {"name": "Archbishop's Park",          "slug": "archbishopsparklambethnorth",        "borough": "Lambeth",    "lat": 51.4955, "lng": -0.1164},
+    # Streatham Common (The Rookery): Covington Way SW16 (spintennisapp)
+    {"name": "Streatham Common",           "slug": "therookery",                        "borough": "Lambeth",    "lat": 51.4215, "lng": -0.1209},
 
     # Lewisham
-    {"name": "Ladywell Fields",            "slug": "LadywellFields",                    "borough": "Lewisham",   "lat": 51.4562, "lng": -0.0189},
-    {"name": "Catford Bridge",             "slug": "CatfordBridge",                     "borough": "Lewisham",   "lat": 51.4449, "lng": -0.0197},
-    {"name": "Manor House Gardens",        "slug": "ManorHouseGds",                     "borough": "Lewisham",   "lat": 51.4516, "lng": -0.0108},
-    {"name": "Chinbrook Meadows",          "slug": "ChinbrookPark",                     "borough": "Lewisham",   "lat": 51.4285, "lng": -0.0122},
+    # Ladywell Fields: northern section, back of Lewisham Hospital SE13 (spintennisapp)
+    {"name": "Ladywell Fields",            "slug": "LadywellFields",                    "borough": "Lewisham",   "lat": 51.4568, "lng": -0.0176},
+    # Catford Bridge: SE6, Ladywell Fields South (spintennisapp slug: ladywell-fields-south-lewisham)
+    {"name": "Catford Bridge",             "slug": "CatfordBridge",                     "borough": "Lewisham",   "lat": 51.4471, "lng": -0.0258},
+    # Manor House Gardens: Manor Lane SE13 (spintennisapp)
+    {"name": "Manor House Gardens",        "slug": "ManorHouseGds",                     "borough": "Lewisham",   "lat": 51.4579, "lng":  0.0040},
+    # Chinbrook Meadows: Grove Park SE12 (spintennisapp — positive lng, east of meridian)
+    {"name": "Chinbrook Meadows",          "slug": "ChinbrookPark",                     "borough": "Lewisham",   "lat": 51.4318, "lng":  0.0294},
 
     # Greenwich
-    {"name": "Greenwich Park",             "slug": "GreenwichPark",                     "borough": "Greenwich",  "lat": 51.4769, "lng":  0.0000},
-    {"name": "Blackheath",                 "slug": "BlackheathPark",                    "borough": "Greenwich",  "lat": 51.4659, "lng":  0.0097},
-    {"name": "Plumstead Common",           "slug": "PlumsteadCommon",                   "borough": "Greenwich",  "lat": 51.4817, "lng":  0.0842},
-    {"name": "Maryon Park",                "slug": "MarYonPark",                        "borough": "Greenwich",  "lat": 51.4875, "lng":  0.0288},
-    {"name": "Eltham Park",                "slug": "ElthamPark",                        "borough": "Greenwich",  "lat": 51.4561, "lng":  0.0601},
+    # Greenwich Park: near Rangers House, on/near meridian (OSM way 8879804 + spintennisapp)
+    {"name": "Greenwich Park",             "slug": "GreenwichPark",                     "borough": "Greenwich",  "lat": 51.4746, "lng": -0.0007},
+    # Blackheath: Chesterfield Walk SE10 (spintennisapp — near 0 longitude, not 0.0097)
+    {"name": "Blackheath",                 "slug": "BlackheathPark",                    "borough": "Greenwich",  "lat": 51.4726, "lng": -0.0007},
+    # Plumstead Common: Waverley Crescent SE18 (spintennisapp)
+    {"name": "Plumstead Common",           "slug": "PlumsteadCommon",                   "borough": "Greenwich",  "lat": 51.4826, "lng":  0.0803},
+    # Maryon Park: Cemetery Lane SE7 (spintennisapp)
+    {"name": "Maryon Park",                "slug": "MarYonPark",                        "borough": "Greenwich",  "lat": 51.4897, "lng":  0.0432},
+    # Eltham Park South: Glenesk Road SE9 (spintennisapp)
+    {"name": "Eltham Park",                "slug": "ElthamPark",                        "borough": "Greenwich",  "lat": 51.4554, "lng":  0.0677},
 
     # Wandsworth
-    {"name": "Battersea Park",             "slug": "BatterseaParkTennisCourts",         "borough": "Wandsworth", "lat": 51.4812, "lng": -0.1547},
-    {"name": "Wandsworth Common",          "slug": "AllWinWandsworthCommonTennisCentre","borough": "Wandsworth", "lat": 51.4444, "lng": -0.1712},
-    {"name": "Tooting Bec Common",         "slug": "AllWinTootingBecCommon",            "borough": "Wandsworth", "lat": 51.4350, "lng": -0.1561},
-    {"name": "Spencer Park",               "slug": "SpencerPark",                       "borough": "Wandsworth", "lat": 51.4607, "lng": -0.1900},
+    # Battersea Park Millennium Arena: East Carriage Drive SW11 (spintennisapp)
+    {"name": "Battersea Park",             "slug": "BatterseaParkTennisCourts",         "borough": "Wandsworth", "lat": 51.4818, "lng": -0.1534},
+    # Wandsworth Common: Off Dorlcote Road SW18 (spintennisapp)
+    {"name": "Wandsworth Common",          "slug": "AllWinWandsworthCommonTennisCentre","borough": "Wandsworth", "lat": 51.4527, "lng": -0.1701},
+    # Tooting Bec Common: Dr Johnson Ave SW17 (spintennisapp)
+    {"name": "Tooting Bec Common",         "slug": "AllWinTootingBecCommon",            "borough": "Wandsworth", "lat": 51.4341, "lng": -0.1488},
+    # Spencer Park = Spencer Lawn Tennis Club: Fieldview/Burntwood Lane SW18 (spintennisapp)
+    {"name": "Spencer Park",               "slug": "SpencerPark",                       "borough": "Wandsworth", "lat": 51.4414, "lng": -0.1775},
 
     # Merton
-    {"name": "Wimbledon Park",             "slug": "WimbledonPark",                     "borough": "Merton",     "lat": 51.4355, "lng": -0.2076},
-    {"name": "Morden Park",                "slug": "MordenPark",                        "borough": "Merton",     "lat": 51.3939, "lng": -0.1987},
-    {"name": "John Innes Park",            "slug": "JohnInnesParkMorden",               "borough": "Merton",     "lat": 51.4055, "lng": -0.1947},
-    {"name": "Tamworth Recreation Ground", "slug": "TamworthRecreationGround",          "borough": "Merton",     "lat": 51.4003, "lng": -0.1710},
+    # Wimbledon Park: Home Park Road SW19 (spintennisapp)
+    {"name": "Wimbledon Park",             "slug": "WimbledonPark",                     "borough": "Merton",     "lat": 51.4359, "lng": -0.2027},
+    # Morden Park: Links Avenue SM4, NE corner of park (spintennisapp)
+    {"name": "Morden Park",                "slug": "MordenPark",                        "borough": "Merton",     "lat": 51.3982, "lng": -0.2014},
+    # John Innes Park: Mostyn Road SW19 (spintennisapp)
+    {"name": "John Innes Park",            "slug": "JohnInnesParkMorden",               "borough": "Merton",     "lat": 51.4093, "lng": -0.2065},
+    # Tamworth Recreation Ground: London Road Mitcham CR4 (spintennisapp)
+    {"name": "Tamworth Recreation Ground", "slug": "TamworthRecreationGround",          "borough": "Merton",     "lat": 51.4150, "lng": -0.1622},
 ]
 
 # Better.org (GLL) tennis venues.
