@@ -782,15 +782,14 @@
 
         // ── List renderer ──────────────────────────────────────────────────────
         function renderResults(data, date, radius) {
-            // For today: drop any slot whose start time has already passed
-            const cutoffMins = isToday(date) ? nowMinutes() : 0;
-            if (cutoffMins > 0) {
+            // For today: drop slots whose start hour is strictly before the current hour.
+            // The current hour's slot is kept (it may still be bookable).
+            // The API clamping in search() already prevents fetching slots from earlier hours.
+            if (isToday(date)) {
+                const curHour = new Date().getHours();
                 data = data.map(({ venue, slots }) => ({
                     venue,
-                    slots: slots.filter(s => {
-                        const [h, m] = s.start.split(':').map(Number);
-                        return h * 60 + m >= cutoffMins;
-                    })
+                    slots: slots.filter(s => parseInt(s.start.split(':')[0]) >= curHour)
                 }));
             }
 
