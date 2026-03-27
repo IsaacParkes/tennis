@@ -161,23 +161,22 @@ def get_better_availability(venues, date_str, start_time=None, end_time=None):
 
         # Auto-discover if not pre-seeded
         if not tennis_slugs:
-            booking_slug, tennis_slugs = fetch_tennis_slugs(slug)
+            discovered_slug, tennis_slugs = fetch_tennis_slugs(slug)
             if not tennis_slugs:
-                return venue, []
+                return venue, [], booking_slug
+            booking_slug = discovered_slug
 
         all_slots = []
         for activity_slug in tennis_slugs:
             times = fetch_better_times(slug, activity_slug, date_str)
             all_slots.extend(parse_better_times(times, activity_slug, start_time, end_time))
 
-        return venue, sorted(all_slots, key=lambda s: (s["court_name"], s["start"]))
+        return venue, sorted(all_slots, key=lambda s: (s["court_name"], s["start"])), booking_slug
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {executor.submit(_fetch_one, v): v for v in venues}
         for future in as_completed(futures):
-            venue, slots = future.result()
-            # Build booking URL
-            booking_slug = venue.get("booking_slug", "tennis-activities")
+            venue, slots, booking_slug = future.result()
             booking_url = f"{BOOKING_BASE}/location/{venue['slug']}/{booking_slug}/{date_str}/by-time"
             results.append({
                 "venue": {**venue, "booking_url": booking_url},

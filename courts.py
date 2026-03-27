@@ -1,13 +1,14 @@
 """
 Tennis court venues in London.
 
-VENUES     — ClubSpark (LTA) courts, booked via clubspark.lta.org.uk
+VENUES        — ClubSpark (LTA) courts, booked via clubspark.lta.org.uk
 BETTER_VENUES — Better.org (GLL) courts, booked via bookings.better.org.uk
 
-All venues have lat/lng for dynamic distance calculation from any user location.
-Better venues are discovered from the OpenActive FacilityUse RPDE feed and
-supplemented here with a confirmed seed list.
-Run `python scripts/discover_better_venues.py` to refresh the full list.
+All venues have lat/lng (pointing at the actual tennis courts, not park centres)
+for dynamic distance calculation from any user location.
+
+To check whether a Better.org venue has tennis:
+    python scripts/discover_better_venues.py <slug>
 """
 
 VENUES = [
@@ -126,10 +127,9 @@ VENUES = [
     {"name": "Tamworth Recreation Ground", "slug": "TamworthRecreationGround",          "borough": "Merton",     "lat": 51.4150, "lng": -0.1622},
 ]
 
-# Better.org (GLL) tennis venues.
-# Confirmed via live API checks March 2026. tennis_slugs are the leaf-level
-# activity slugs for the /times endpoint; booking_slug is the parent category
-# used in the booking URL.
+# Better.org (GLL) tennis venues — confirmed via live API checks March 2026.
+# tennis_slugs: leaf-level activity slugs for the /times endpoint.
+# booking_slug: parent category slug used in the booking URL path.
 BETTER_VENUES = [
     # Hackney — confirmed has tennis-activities with outdoor courts
     {
