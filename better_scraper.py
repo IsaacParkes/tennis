@@ -107,7 +107,7 @@ def parse_better_times(times_data, court_name, start_time=None, end_time=None):
     for t in times_data:
         if t.get("spaces", 0) == 0:
             continue
-        status = t.get("action_to_show", {}).get("status", "")
+        status = (t.get("action_to_show") or {}).get("status", "")
         if status == "SOLD_OUT":
             continue
 

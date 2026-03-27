@@ -30,23 +30,15 @@ VENUES = [
     {"name": "Spring Hill Rec", "slug": "SpringHillParkTennis", "borough": "Hackney", "lat": 51.5702, "lng": -0.0467},
     {"name": "Millfields Park", "slug": "MillfieldsParkMiddlesex", "borough": "Hackney", "lat": 51.5578, "lng": -0.0493},
 
-    # Islington
-    {"name": "Highbury Fields", "slug": "HighburyFields", "borough": "Islington", "lat": 51.5543, "lng": -0.0990},
-    {"name": "Highbury Grove", "slug": "HighburyGrove", "borough": "Islington", "lat": 51.5514, "lng": -0.0992},
-
     # Enfield
     {"name": "Pymmes Park", "slug": "PymmesPark", "borough": "Enfield", "lat": 51.6155, "lng": -0.0791},
     {"name": "Broomfield Park", "slug": "BroomfieldPark", "borough": "Enfield", "lat": 51.6097, "lng": -0.1125},
 
     # Waltham Forest
     {"name": "Lloyd Park", "slug": "LloydPark", "borough": "Waltham Forest", "lat": 51.5845, "lng": -0.0135},
-    {"name": "Walthamstow Wetlands", "slug": "WalthamstowWetlands", "borough": "Waltham Forest", "lat": 51.5900, "lng": -0.0229},
 
     # Tower Hamlets / East London
     {"name": "Victoria Park", "slug": "VictoriaParkTennis", "borough": "Tower Hamlets", "lat": 51.5363, "lng": -0.0396},
-
-    # Camden
-    {"name": "Regent's Park", "slug": "RegentsParkTennis", "borough": "Camden", "lat": 51.5269, "lng": -0.1541},
 
     # Southwark / Lewisham
     {"name": "Dulwich Park", "slug": "DulwichPark", "borough": "Southwark", "lat": 51.4510, "lng": -0.0852},
@@ -66,6 +58,17 @@ BETTER_VENUES = [
         "borough": "Hackney",
         "lat": 51.5342,
         "lng": -0.0830,
+        "source": "better",
+    },
+    # Hackney — GLL-managed outdoor parks courts (Haggerston Park and others), £8/hr
+    {
+        "name": "Hackney Parks (GLL)",
+        "slug": "hackney-parks",
+        "booking_slug": "tennis-activities",
+        "tennis_slugs": ["tennis-court-outdoor"],
+        "borough": "Hackney",
+        "lat": 51.5338,
+        "lng": -0.0771,
         "source": "better",
     },
     # Islington — confirmed has outdoor + indoor courts
