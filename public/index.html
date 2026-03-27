@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>London Tennis Courts</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -330,18 +331,62 @@
             border: 1px solid #ce93d8;
         }
 
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            padding: 0.8rem 1rem;
+            background: white;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .view-toggle button {
+            background: #f0f4f0;
+            border: 1px solid #ccc;
+            padding: 0.45rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #555;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .view-toggle button:first-child { border-radius: 6px 0 0 6px; border-right: none; }
+        .view-toggle button:last-child  { border-radius: 0 6px 6px 0; }
+
+        .view-toggle button.active {
+            background: #2d6a4f;
+            color: white;
+            border-color: #2d6a4f;
+        }
+
+        #map-container {
+            display: none;
+            max-width: 1100px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        #map {
+            height: 540px;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            z-index: 0;
+        }
+
         @media (max-width: 600px) {
             .controls { padding: 1rem; }
             .results { padding: 0 0.5rem; }
             .venue-header { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
             input[type="text"] { width: 140px; }
+            #map { height: 380px; }
         }
     </style>
 </head>
 <body>
     <header>
         <h1>London Tennis Courts</h1>
-        <p>Find available ClubSpark courts near you</p>
+        <p>Find available tennis courts near you across London</p>
     </header>
 
     <div class="controls">
@@ -400,10 +445,20 @@
         </div>
     </div>
 
+    <div class="view-toggle" id="view-toggle" style="display:none">
+        <button id="btn-list" class="active" onclick="switchView('list')">&#9776; List</button>
+        <button id="btn-map" onclick="switchView('map')">&#x1f5fa; Map</button>
+    </div>
+
     <div class="results" id="results">
         <div class="status-msg">Select a location and date, then click Search.</div>
     </div>
 
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqBk=" crossorigin=""></script>
     <script>
         const dateInput = document.getElementById('date-input');
         const startSelect = document.getElementById('start-time');
@@ -415,9 +470,14 @@
         const locateBtn = document.getElementById('locate-btn');
         const radiusSelect = document.getElementById('radius');
 
-        // Resolved coordinates (set by geocoding or geolocation)
         let resolvedLat = null;
         let resolvedLng = null;
+        let currentView = 'list';
+        let leafletMap = null;
+        let mapMarkers = [];
+        let userMarker = null;
+        let lastResults = null;
+        let lastDate = null;
 
         for (let h = 6; h <= 22; h++) {
             const val = `${String(h).padStart(2, '0')}:00`;
@@ -461,7 +521,6 @@
             search();
         }
 
-        // Clear resolved coords when user edits location text
         locationInput.addEventListener('input', () => {
             resolvedLat = null;
             resolvedLng = null;
@@ -503,7 +562,6 @@
             const clean = q.replace(/\s+/g, '').toUpperCase();
 
             if (isUkFullPostcode(q)) {
-                // Full postcode e.g. "N15 5PQ"
                 try {
                     const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
                     const data = await resp.json();
@@ -514,7 +572,6 @@
             }
 
             if (isUkOutcode(q)) {
-                // Outcode e.g. "N15", "SW1A", "EC1"
                 try {
                     const resp = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
                     const data = await resp.json();
@@ -524,7 +581,6 @@
                 } catch (e) {}
             }
 
-            // Fallback: Nominatim (OpenStreetMap)
             const params = new URLSearchParams({ q: `${q}, London, UK`, format: 'json', limit: 1, countrycodes: 'gb' });
             const resp = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
                 headers: { 'Accept-Language': 'en' }
@@ -537,6 +593,99 @@
             return null;
         }
 
+        // ── View toggle ────────────────────────────────────────────────────────
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('btn-list').classList.toggle('active', view === 'list');
+            document.getElementById('btn-map').classList.toggle('active', view === 'map');
+            resultsDiv.style.display = view === 'list' ? '' : 'none';
+            document.getElementById('map-container').style.display = view === 'map' ? '' : 'none';
+
+            if (view === 'map') {
+                initMap();
+                if (leafletMap) {
+                    // Trigger resize in case map was hidden during initialisation
+                    setTimeout(() => leafletMap.invalidateSize(), 50);
+                }
+                if (lastResults) renderMap(lastResults, lastDate);
+            }
+        }
+
+        // ── Leaflet map ────────────────────────────────────────────────────────
+        function initMap() {
+            if (leafletMap) return;
+            leafletMap = L.map('map').setView([51.52, -0.08], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(leafletMap);
+        }
+
+        function renderMap(data, date) {
+            if (!leafletMap) return;
+
+            // Clear old markers
+            mapMarkers.forEach(m => leafletMap.removeLayer(m));
+            mapMarkers = [];
+            if (userMarker) { leafletMap.removeLayer(userMarker); userMarker = null; }
+
+            // User location marker
+            if (resolvedLat !== null && resolvedLng !== null) {
+                userMarker = L.circleMarker([resolvedLat, resolvedLng], {
+                    radius: 8, fillColor: '#1565c0', color: '#fff',
+                    weight: 2, opacity: 1, fillOpacity: 0.9
+                }).addTo(leafletMap);
+                userMarker.bindPopup('<strong>Your location</strong>');
+            }
+
+            const bounds = [];
+            if (resolvedLat !== null) bounds.push([resolvedLat, resolvedLng]);
+
+            for (const { venue: v, slots } of data) {
+                if (!v.lat || !v.lng) continue;
+
+                const hasSlots = slots.length > 0;
+                const isBetter = v.source === 'better';
+                const bookingUrl = isBetter
+                    ? (v.booking_url || `https://bookings.better.org.uk/location/${v.slug}/tennis-activities/${date}/by-time`)
+                    : `https://clubspark.lta.org.uk/${v.slug}/Booking/BookByDate#?date=${date}&role=guest`;
+
+                const marker = L.circleMarker([v.lat, v.lng], {
+                    radius: hasSlots ? 9 : 6,
+                    fillColor: hasSlots ? '#2d6a4f' : '#aaa',
+                    color: '#fff', weight: 2,
+                    opacity: 1, fillOpacity: hasSlots ? 0.9 : 0.6
+                }).addTo(leafletMap);
+
+                const badge = isBetter
+                    ? `<span style="font-size:0.75rem;background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;border-radius:3px;padding:1px 5px;margin-left:4px">Better</span>`
+                    : `<span style="font-size:0.75rem;background:#f3e5f5;color:#6a1b9a;border:1px solid #ce93d8;border-radius:3px;padding:1px 5px;margin-left:4px">ClubSpark</span>`;
+
+                const slotLine = hasSlots
+                    ? `<div style="color:#2d6a4f;font-weight:600">${slots.length} slot${slots.length !== 1 ? 's' : ''} available</div>`
+                    : `<div style="color:#aaa">No slots in this time range</div>`;
+
+                marker.bindPopup(
+                    `<div style="min-width:160px">` +
+                    `<div style="font-weight:700;font-size:1rem">${v.name}${badge}</div>` +
+                    `<div style="color:#777;font-size:0.85rem">${v.borough} &bull; ${v.distance_miles} mi</div>` +
+                    slotLine +
+                    `<a href="${bookingUrl}" target="_blank" style="display:inline-block;margin-top:6px;color:#2d6a4f;font-weight:600;text-decoration:none">Book &rarr;</a>` +
+                    `</div>`
+                );
+
+                bounds.push([v.lat, v.lng]);
+                mapMarkers.push(marker);
+            }
+
+            if (bounds.length > 1) {
+                leafletMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+            } else if (bounds.length === 1) {
+                leafletMap.setView(bounds[0], 13);
+            }
+        }
+
+        // ── Search ─────────────────────────────────────────────────────────────
         async function search() {
             const date = dateInput.value;
             const startTime = startSelect.value;
@@ -546,7 +695,6 @@
 
             searchBtn.disabled = true;
 
-            // Resolve location
             let lat = resolvedLat;
             let lng = resolvedLng;
             const locationText = locationInput.value.trim();
@@ -589,7 +737,14 @@
                     return;
                 }
 
+                lastResults = data;
+                lastDate = date;
+                document.getElementById('view-toggle').style.display = '';
                 renderResults(data, date, radius);
+                if (currentView === 'map') {
+                    initMap();
+                    renderMap(data, date);
+                }
             } catch (err) {
                 resultsDiv.innerHTML = '<div class="status-msg">Failed to fetch availability. Please try again.</div>';
             } finally {
@@ -597,6 +752,7 @@
             }
         }
 
+        // ── List renderer ──────────────────────────────────────────────────────
         function renderResults(data, date, radius) {
             const totalSlots = data.reduce((sum, v) => sum + v.slots.length, 0);
             const venuesWithSlots = data.filter(v => v.slots.length > 0).length;
