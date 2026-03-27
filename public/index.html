@@ -556,6 +556,41 @@
             );
         }
 
+        // ── Time helpers ───────────────────────────────────────────────────────
+        function isToday(dateStr) {
+            return dateStr === formatDate(new Date());
+        }
+
+        // Current time as total minutes from midnight
+        function nowMinutes() {
+            const n = new Date();
+            return n.getHours() * 60 + n.getMinutes();
+        }
+
+        // Current hour as "HH:00" string
+        function currentHourStr() {
+            return `${String(new Date().getHours()).padStart(2, '0')}:00`;
+        }
+
+        // Return the later of two "HH:MM" strings
+        function laterTime(a, b) { return a >= b ? a : b; }
+
+        // Disable past options in the FROM dropdown; advance selection if it's in the past
+        function updateStartTimeForDate() {
+            const todaySelected = isToday(dateInput.value);
+            const curHour = new Date().getHours();
+            for (const opt of startSelect.options) {
+                opt.disabled = todaySelected && parseInt(opt.value) < curHour;
+            }
+            if (todaySelected && startSelect.value < currentHourStr()) {
+                startSelect.value = currentHourStr();
+            }
+        }
+
+        // Call once on load and whenever date changes
+        updateStartTimeForDate();
+        dateInput.addEventListener('change', updateStartTimeForDate);
+
         function isUkFullPostcode(s) {
             return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(s.trim());
         }
@@ -731,7 +766,9 @@
             resultsDiv.innerHTML = `<div class="status-msg"><span class="spinner"></span> Checking courts within ${radius} mile${radius == 1 ? '' : 's'}&hellip;</div>`;
 
             try {
-                const params = new URLSearchParams({ date, start_time: startTime, end_time: endTime, radius });
+                // If searching today, never ask for slots before right now
+                const effectiveStart = isToday(date) ? laterTime(startTime, currentHourStr()) : startTime;
+                const params = new URLSearchParams({ date, start_time: effectiveStart, end_time: endTime, radius });
                 if (lat !== null && lng !== null) {
                     params.set('lat', lat);
                     params.set('lng', lng);
@@ -761,6 +798,18 @@
 
         // ── List renderer ──────────────────────────────────────────────────────
         function renderResults(data, date, radius) {
+            // For today: drop any slot whose start time has already passed
+            const cutoffMins = isToday(date) ? nowMinutes() : 0;
+            if (cutoffMins > 0) {
+                data = data.map(({ venue, slots }) => ({
+                    venue,
+                    slots: slots.filter(s => {
+                        const [h, m] = s.start.split(':').map(Number);
+                        return h * 60 + m >= cutoffMins;
+                    })
+                }));
+            }
+
             const totalSlots = data.reduce((sum, v) => sum + v.slots.length, 0);
             const venuesWithSlots = data.filter(v => v.slots.length > 0).length;
 
