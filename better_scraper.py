@@ -79,12 +79,18 @@ def fetch_better_times(venue_slug, activity_slug, date_str):
     """
     Fetch available time slots for one leaf tennis activity.
     Returns list of raw slot dicts, or [] on error.
+
+    Note: the API returns data as a list for future dates but as a dict
+    (keyed by index string "0", "1", ...) for today's date. We normalise both.
     """
     url = f"{BETTER_ADMIN}/api/activities/venue/{venue_slug}/activity/{activity_slug}/times"
     try:
         resp = requests.get(url, params={"date": date_str}, headers=HEADERS, timeout=10)
         resp.raise_for_status()
-        return resp.json().get("data", [])
+        data = resp.json().get("data", [])
+        if isinstance(data, dict):
+            data = list(data.values())
+        return data
     except Exception:
         return []
 
