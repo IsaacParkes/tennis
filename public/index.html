@@ -599,7 +599,7 @@
             document.getElementById('btn-list').classList.toggle('active', view === 'list');
             document.getElementById('btn-map').classList.toggle('active', view === 'map');
             resultsDiv.style.display = view === 'list' ? '' : 'none';
-            document.getElementById('map-container').style.display = view === 'map' ? '' : 'none';
+            document.getElementById('map-container').style.display = view === 'map' ? 'block' : 'none';
 
             if (view === 'map') {
                 initMap();
