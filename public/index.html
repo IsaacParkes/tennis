@@ -575,22 +575,6 @@
         // Return the later of two "HH:MM" strings
         function laterTime(a, b) { return a >= b ? a : b; }
 
-        // Disable past options in the FROM dropdown; advance selection if it's in the past
-        function updateStartTimeForDate() {
-            const todaySelected = isToday(dateInput.value);
-            const curHour = new Date().getHours();
-            for (const opt of startSelect.options) {
-                opt.disabled = todaySelected && parseInt(opt.value) < curHour;
-            }
-            if (todaySelected && startSelect.value < currentHourStr()) {
-                startSelect.value = currentHourStr();
-            }
-        }
-
-        // Call once on load and whenever date changes
-        updateStartTimeForDate();
-        dateInput.addEventListener('change', updateStartTimeForDate);
-
         function isUkFullPostcode(s) {
             return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(s.trim());
         }
