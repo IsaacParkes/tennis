@@ -367,11 +367,16 @@
             padding: 0 1rem;
         }
 
-        #map {
-            height: 540px;
+        /* border-radius on the Leaflet container itself prevents tile painting;
+           apply visual styling to the wrapper instead */
+        #map-wrapper {
             border-radius: 10px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-            z-index: 0;
+            overflow: hidden;
+        }
+
+        #map {
+            height: 540px;
         }
 
         @media (max-width: 600px) {
@@ -455,7 +460,9 @@
     </div>
 
     <div id="map-container">
-        <div id="map"></div>
+        <div id="map-wrapper">
+            <div id="map"></div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
