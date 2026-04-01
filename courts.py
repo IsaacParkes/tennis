@@ -58,7 +58,7 @@ VENUES = [
 
     # Tower Hamlets / East London
     # Victoria Park: E9, courts in western section (spintennisapp)
-    {"name": "Victoria Park", "slug": "VictoriaParkTennis", "borough": "Tower Hamlets", "lat": 51.5407, "lng": -0.0391},
+    {"name": "Victoria Park", "slug": "VictoriaParkLondon", "borough": "Tower Hamlets", "lat": 51.5407, "lng": -0.0391},
 
     # Southwark
     # Dulwich Park: College Road SE21, courts near Francis Peek Centre (spintennisapp)
